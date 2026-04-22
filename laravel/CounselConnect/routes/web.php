@@ -35,7 +35,7 @@ Route::post('/auth/complete-profile', [AuthController::class, 'completeProfile']
 Route::get('/', fn () => view('CounselConnect.index'))->name('home');
 Route::get('/services', fn () => view('CounselConnect.services'))->name('services');
 Route::get('/resources', fn () => view('CounselConnect.resources'))->name('resources');
-Route::get('/faq', fn () => view('CounselConnect.faq'))->name('FAQ');
+Route::get('/faq', fn () => view('CounselConnect.FAQ'))->name('FAQ');
 
 // Admin login (outside guest group — has its own auth check inside the controller)
 Route::get('/backoffice',  [AuthController::class, 'showAdminLogin'])->name('admin.login');
