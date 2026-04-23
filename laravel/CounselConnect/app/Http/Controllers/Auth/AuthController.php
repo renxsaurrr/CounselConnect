@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Socialite\Facades\Socialite;
 
+
 class AuthController extends Controller
 {
     // ─── Show Public Login ────────────────────────────────────────
