@@ -25,7 +25,7 @@ class AdminDashboardController extends Controller
             ->latest()
             ->take(10)
             ->get();
-
+            
         $recentReferrals = Referral::with(['referredBy', 'referredTo', 'student'])
             ->latest()
             ->take(5)
