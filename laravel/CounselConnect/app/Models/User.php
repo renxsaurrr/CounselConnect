@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\StudentProfile;
-use App\Models\CounselorProfile;
-use App\Models\AdminProfile;
+use App\Models\Counselorprofile;
+use App\Models\Adminprofile;
 
 class User extends Authenticatable
 {
@@ -60,12 +60,12 @@ class User extends Authenticatable
 
     public function counselorProfile()
     {
-        return $this->hasOne(CounselorProfile::class);
+        return $this->hasOne(Counselorprofile::class);
     }
 
     public function adminProfile()
     {
-        return $this->hasOne(AdminProfile::class);
+        return $this->hasOne(Adminprofile::class);
     }
 
     // ─── Appointments ────────────────────────────────────────────
