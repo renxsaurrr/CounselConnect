@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\StudentProfile;
+use App\Models\CounselorProfile;
+use App\Models\AdminProfile;
 
 class User extends Authenticatable
 {
