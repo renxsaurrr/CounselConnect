@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\User;
-use App\Models\AdminProfile;
+use App\Models\Adminprofile;
 
 class AdminProfileSeeder extends Seeder
 {

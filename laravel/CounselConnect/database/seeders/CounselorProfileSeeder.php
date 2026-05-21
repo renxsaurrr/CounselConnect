@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\User;
-use App\Models\CounselorProfile;
+use App\Models\Counselorprofile;
 
 class CounselorProfileSeeder extends Seeder
 {
