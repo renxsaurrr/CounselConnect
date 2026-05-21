@@ -51,6 +51,11 @@ Route::post('/logout', [AuthController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');
 
+Route::get('/run-seeder', function () {
+    Artisan::call('db:seed', ['--force' => true]);
+    return 'Seeded!';
+});
+
 // ──────────────────────────────────────────────────────────────
 // Admin Routes
 // ──────────────────────────────────────────────────────────────
