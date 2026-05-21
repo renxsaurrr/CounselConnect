@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Counselor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
-use App\Models\CounselorSchedule;
+use App\Models\Counselorschedule;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -38,7 +38,7 @@ class CounselorAppointmentController extends Controller
             ->get();
 
         // Load this counselor's active schedule slots
-        $scheduleSlots = CounselorSchedule::where('counselor_id', Auth::id())
+        $scheduleSlots = Counselorschedule::where('counselor_id', Auth::id())
             ->where('is_active', true)
             ->orderByRaw("FIELD(day_of_week,'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday')")
             ->orderBy('start_time')
