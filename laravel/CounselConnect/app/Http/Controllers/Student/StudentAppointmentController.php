@@ -21,7 +21,15 @@ class StudentAppointmentController extends Controller
             ->latest()
             ->paginate(10);
 
-        return view('CounselConnect.student.appointments.index', compact('appointments'));
+        // Separate pending counselor invites so they can be surfaced prominently
+        $pendingInvites = Appointment::where('student_id', Auth::id())
+            ->where('initiated_by', 'counselor')
+            ->where('status', 'pending')
+            ->where('invite_status', 'pending')
+            ->with('counselor.counselorProfile')
+            ->get();
+
+        return view('CounselConnect.student.appointments.index', compact('appointments', 'pendingInvites'));
     }
 
     // ─── Show Booking Form ───────────────────────────────────────
@@ -36,8 +44,6 @@ class StudentAppointmentController extends Controller
     }
 
     // ─── Fetch Available Slots (AJAX) ────────────────────────────
-    // Called when student selects a counselor + date on the booking form
-    // Returns available time slots as JSON
     public function availableSlots(Request $request)
     {
         $request->validate([
@@ -46,9 +52,8 @@ class StudentAppointmentController extends Controller
         ]);
 
         $date      = Carbon::parse($request->date);
-        $dayOfWeek = $date->format('l'); // e.g. "Monday"
+        $dayOfWeek = $date->format('l');
 
-        // Get counselor's schedule for that day
         $schedule = CounselorSchedule::where('counselor_id', $request->counselor_id)
             ->where('day_of_week', $dayOfWeek)
             ->where('is_active', true)
@@ -56,20 +61,17 @@ class StudentAppointmentController extends Controller
 
         if (!$schedule) {
             return response()->json([
-                'slots' => [],
+                'slots'   => [],
                 'message' => 'Counselor is not available on this day.',
             ]);
         }
 
-        // Generate all possible slots for the day
         $slots = $this->generateSlots(
             $schedule->start_time,
             $schedule->end_time,
             $schedule->slot_duration_mins
         );
 
-        // Get already booked times for that counselor on that date
-        // (pending or approved — both block the slot)
         $counselorBookedTimes = Appointment::where('counselor_id', $request->counselor_id)
             ->where('preferred_date', $date->toDateString())
             ->whereIn('status', ['pending', 'approved'])
@@ -77,7 +79,6 @@ class StudentAppointmentController extends Controller
             ->map(fn($t) => Carbon::parse($t)->format('H:i'))
             ->toArray();
 
-        // Also block times the current student already has booked on this date (any counselor)
         $studentBookedTimes = Appointment::where('student_id', Auth::id())
             ->where('preferred_date', $date->toDateString())
             ->whereIn('status', ['pending', 'approved'])
@@ -85,10 +86,8 @@ class StudentAppointmentController extends Controller
             ->map(fn($t) => Carbon::parse($t)->format('H:i'))
             ->toArray();
 
-        $allBlockedTimes = array_unique(array_merge($counselorBookedTimes, $studentBookedTimes));
-
-        // Filter out booked slots
-        $availableSlots = array_filter($slots, fn($slot) => !in_array($slot, $allBlockedTimes));
+        $allBlockedTimes  = array_unique(array_merge($counselorBookedTimes, $studentBookedTimes));
+        $availableSlots   = array_filter($slots, fn($slot) => !in_array($slot, $allBlockedTimes));
 
         return response()->json([
             'slots'       => array_values($availableSlots),
@@ -108,8 +107,6 @@ class StudentAppointmentController extends Controller
             'notes'          => ['nullable', 'string', 'max:1000'],
         ]);
 
-        // ── Double-check slot is still available at submission time ──
-        // (guards against race condition where two students submit simultaneously)
         $slotTaken = Appointment::where('counselor_id', $data['counselor_id'])
             ->where('preferred_date', $data['preferred_date'])
             ->where('preferred_time', $data['preferred_time'])
@@ -122,7 +119,6 @@ class StudentAppointmentController extends Controller
             ])->withInput();
         }
 
-        // ── Prevent student from booking the same date & time with any counselor ──
         $studentAlreadyBookedSameSlot = Appointment::where('student_id', Auth::id())
             ->where('preferred_date', $data['preferred_date'])
             ->where('preferred_time', $data['preferred_time'])
@@ -135,7 +131,6 @@ class StudentAppointmentController extends Controller
             ])->withInput();
         }
 
-        // ── Validate the chosen slot actually exists in counselor's schedule ──
         $date      = Carbon::parse($data['preferred_date']);
         $dayOfWeek = $date->format('l');
 
@@ -162,7 +157,6 @@ class StudentAppointmentController extends Controller
             ])->withInput();
         }
 
-        // ── Prevent duplicate active appointments with same counselor ──
         $existing = Appointment::where('student_id', Auth::id())
             ->where('counselor_id', $data['counselor_id'])
             ->whereIn('status', ['pending', 'approved'])
@@ -176,9 +170,10 @@ class StudentAppointmentController extends Controller
 
         Appointment::create([
             ...$data,
-            'schedule_id' => $schedule->id,
-            'student_id'  => Auth::id(),
-            'status'      => 'pending',
+            'schedule_id'  => $schedule->id,
+            'student_id'   => Auth::id(),
+            'status'       => 'pending',
+            'initiated_by' => 'student',
         ]);
 
         return redirect()->route('student.appointments.index')
@@ -191,6 +186,39 @@ class StudentAppointmentController extends Controller
         $this->authorizeAppointment($appointment);
         $appointment->load(['counselor.counselorProfile', 'schedule', 'sessionRecord']);
         return view('CounselConnect.student.appointments.show', compact('appointment'));
+    }
+
+    // ─── Accept Counselor Invite ─────────────────────────────────
+    // Student accepts a counselor-initiated appointment invite.
+    // This flips invite_status to 'accepted' — the counselor still needs to
+    // formally approve/schedule it (i.e. set status → 'approved' + scheduled_at).
+    public function acceptInvite(Appointment $appointment)
+    {
+        $this->authorizeAppointment($appointment);
+
+        abort_if(! $appointment->isAwaitingStudentResponse(), 422, 'This invite cannot be accepted.');
+
+        $appointment->update(['invite_status' => 'accepted']);
+
+        return redirect()->route('student.appointments.show', $appointment)
+            ->with('success', 'You have accepted the counselor\'s invitation. The appointment will be confirmed shortly.');
+    }
+
+    // ─── Decline Counselor Invite ────────────────────────────────
+    // Student declines the invite — marks it cancelled so it disappears from active lists.
+    public function declineInvite(Appointment $appointment)
+    {
+        $this->authorizeAppointment($appointment);
+
+        abort_if(! $appointment->isAwaitingStudentResponse(), 422, 'This invite cannot be declined.');
+
+        $appointment->update([
+            'invite_status' => 'declined',
+            'status'        => 'cancelled',
+        ]);
+
+        return redirect()->route('student.appointments.index')
+            ->with('success', 'You have declined the counselor\'s invitation.');
     }
 
     // ─── Cancel Appointment ──────────────────────────────────────
@@ -210,7 +238,6 @@ class StudentAppointmentController extends Controller
             ->with('success', 'Appointment cancelled.');
     }
 
-    // Students cannot edit appointments directly
     public function edit(Appointment $appointment)  { abort(404); }
     public function update(Appointment $appointment){ abort(404); }
 
@@ -221,8 +248,6 @@ class StudentAppointmentController extends Controller
     }
 
     // ─── Slot Generator ──────────────────────────────────────────
-    // Breaks a time range into slots of a given duration
-    // e.g. 08:00 - 12:00 with 60 mins → ['08:00', '09:00', '10:00', '11:00']
     private function generateSlots(string $startTime, string $endTime, int $durationMins): array
     {
         $slots   = [];

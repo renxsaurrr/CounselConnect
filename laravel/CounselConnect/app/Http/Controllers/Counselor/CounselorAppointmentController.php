@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Counselor;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\CounselorSchedule;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -25,6 +26,101 @@ class CounselorAppointmentController extends Controller
         return view('CounselConnect.counselor.appointments.index', compact('appointments'));
     }
 
+    // ─── Show Invite Form ────────────────────────────────────────
+    // Counselor picks a student, date, time, and concern type
+    public function create()
+    {
+        // Load all active students
+        $students = User::where('role', 'student')
+            ->where('is_active', true)
+            ->with('studentProfile')
+            ->orderBy('name')
+            ->get();
+
+        // Load this counselor's active schedule slots
+        $scheduleSlots = CounselorSchedule::where('counselor_id', Auth::id())
+            ->where('is_active', true)
+            ->orderByRaw("FIELD(day_of_week,'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday')")
+            ->orderBy('start_time')
+            ->get();
+
+        return view('CounselConnect.counselor.appointments.invite', compact('students', 'scheduleSlots'));
+    }
+
+    // ─── Store Counselor-Initiated Invite ────────────────────────
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'student_id'     => ['required', 'exists:users,id'],
+            'concern_type'   => ['required', 'in:Academic,Personal,Career,Mental Health,Other'],
+            'preferred_date' => ['required', 'date', 'after_or_equal:today'],
+            'preferred_time' => ['required', 'date_format:H:i'],
+            'notes'          => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $date      = Carbon::parse($data['preferred_date']);
+        $dayOfWeek = $date->format('l');
+        $time      = Carbon::createFromFormat('H:i', $data['preferred_time']);
+
+        // ── Must fall within counselor's own active schedule slot ──
+        $schedule = CounselorSchedule::where('counselor_id', Auth::id())
+            ->where('day_of_week', $dayOfWeek)
+            ->where('is_active', true)
+            ->get()
+            ->first(function ($slot) use ($time) {
+                $start = Carbon::createFromFormat('H:i:s', $slot->start_time);
+                $end   = Carbon::createFromFormat('H:i:s', $slot->end_time);
+                return $time->gte($start) && $time->lt($end);
+            });
+
+        if (! $schedule) {
+            throw ValidationException::withMessages([
+                'preferred_time' => 'The selected date & time does not fall within any of your active schedule slots.',
+            ]);
+        }
+
+        // ── Check counselor slot isn't already booked ──
+        $slotTaken = Appointment::where('counselor_id', Auth::id())
+            ->where('preferred_date', $data['preferred_date'])
+            ->where('preferred_time', $data['preferred_time'])
+            ->whereIn('status', ['pending', 'approved'])
+            ->exists();
+
+        if ($slotTaken) {
+            throw ValidationException::withMessages([
+                'preferred_time' => 'You already have an appointment booked at this time slot.',
+            ]);
+        }
+
+        // ── Prevent duplicate active appointment with same student ──
+        $existing = Appointment::where('counselor_id', Auth::id())
+            ->where('student_id', $data['student_id'])
+            ->whereIn('status', ['pending', 'approved'])
+            ->exists();
+
+        if ($existing) {
+            throw ValidationException::withMessages([
+                'student_id' => 'This student already has an active appointment with you.',
+            ]);
+        }
+
+        Appointment::create([
+            'student_id'     => $data['student_id'],
+            'counselor_id'   => Auth::id(),
+            'schedule_id'    => $schedule->id,
+            'concern_type'   => $data['concern_type'],
+            'preferred_date' => $data['preferred_date'],
+            'preferred_time' => $data['preferred_time'],
+            'notes'          => $data['notes'] ?? null,
+            'status'         => 'pending',
+            'initiated_by'   => 'counselor',
+            'invite_status'  => 'pending',
+        ]);
+
+        return redirect()->route('counselor.appointments.index')
+            ->with('success', 'Invitation sent to student. Awaiting their response.');
+    }
+
     // ─── Show Single Appointment ─────────────────────────────────
     public function show(Appointment $appointment)
     {
@@ -32,14 +128,12 @@ class CounselorAppointmentController extends Controller
 
         $appointment->load(['student.studentProfile', 'schedule', 'sessionRecord']);
 
-        // Build available slots for the "Propose Different Time" picker
         $scheduleSlots = CounselorSchedule::where('counselor_id', Auth::id())
             ->where('is_active', true)
             ->orderByRaw("FIELD(day_of_week,'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday')")
             ->orderBy('start_time')
             ->get();
 
-        // Check if the student's preferred date+time falls within any of the counselor's slots
         $preferredDate = Carbon::parse($appointment->preferred_date);
         $preferredTime = Carbon::parse($appointment->preferred_time);
 
@@ -60,20 +154,22 @@ class CounselorAppointmentController extends Controller
     }
 
     // ─── Approve Appointment ─────────────────────────────────────
-    // Handles two modes:
-    //   mode = "accept"  → use the student's preferred_date + preferred_time
-    //   mode = "propose" → counselor picks a date + time constrained to their own slots
     public function approve(Request $request, Appointment $appointment)
     {
         $this->authorizeAppointment($appointment);
 
         abort_if(! $appointment->isPending(), 422, 'Only pending appointments can be approved.');
 
+        // Counselor-initiated invites must be accepted by the student first
+        abort_if(
+            $appointment->isCounselorInitiated() && $appointment->invite_status !== 'accepted',
+            422,
+            'This invite has not been accepted by the student yet.'
+        );
+
         $request->validate(['mode' => ['required', 'in:accept,propose']]);
 
         if ($request->mode === 'accept') {
-            // ── Accept as Requested ──────────────────────────────
-            // Re-verify the preferred time still falls within an active slot
             $preferredDate = Carbon::parse($appointment->preferred_date);
             $preferredTime = Carbon::parse($appointment->preferred_time);
 
@@ -96,12 +192,10 @@ class CounselorAppointmentController extends Controller
             }
 
             $scheduledAt = Carbon::parse(
-    Carbon::parse($appointment->preferred_date)->format('Y-m-d') . ' ' .
-    Carbon::parse($appointment->preferred_time)->format('H:i:s')
-);
-
+                Carbon::parse($appointment->preferred_date)->format('Y-m-d') . ' ' .
+                Carbon::parse($appointment->preferred_time)->format('H:i:s')
+            );
         } else {
-            // ── Propose a Different Time ─────────────────────────
             $data = $request->validate([
                 'proposed_date' => ['required', 'date', 'after_or_equal:today'],
                 'proposed_time' => ['required', 'date_format:H:i'],
@@ -110,7 +204,6 @@ class CounselorAppointmentController extends Controller
             $proposedDate = Carbon::parse($data['proposed_date']);
             $proposedTime = Carbon::createFromFormat('H:i', $data['proposed_time']);
 
-            // Must fall within one of the counselor's own active schedule slots
             $validSlot = CounselorSchedule::where('counselor_id', Auth::id())
                 ->where('is_active', true)
                 ->get()
@@ -129,9 +222,8 @@ class CounselorAppointmentController extends Controller
                 ]);
             }
 
-            // Enforce slot boundary alignment if applicable
             if ($validSlot->slot_duration_mins > 0) {
-                $slotStart       = Carbon::createFromFormat('H:i:s', $validSlot->start_time);
+                $slotStart        = Carbon::createFromFormat('H:i:s', $validSlot->start_time);
                 $minutesFromStart = $slotStart->diffInMinutes($proposedTime);
                 if ($minutesFromStart % $validSlot->slot_duration_mins !== 0) {
                     throw ValidationException::withMessages([
@@ -184,13 +276,6 @@ class CounselorAppointmentController extends Controller
         return redirect()->route('counselor.sessions.create', ['appointment' => $appointment->id])
             ->with('success', 'Appointment marked as completed. Please fill in the session record.');
     }
-
-    // These are not applicable for counselors — students book appointments
-    public function create() { abort(404); }
-    public function store()  { abort(404); }
-    public function edit()   { abort(404); }
-    public function update() { abort(404); }
-    public function destroy(){ abort(404); }
 
     // ─── Guard: Only Own Appointments ────────────────────────────
     private function authorizeAppointment(Appointment $appointment): void

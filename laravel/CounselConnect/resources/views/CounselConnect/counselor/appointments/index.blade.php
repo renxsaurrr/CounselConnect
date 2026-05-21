@@ -6,10 +6,23 @@
 @section('content')
 
 {{-- ── Header ── --}}
-<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-    <p class="text-sm text-gray-500">Review and manage student appointment requests.</p>
+<div class="flex flex-col gap-3 mb-6">
 
-    {{-- Status Filter — scrollable on mobile --}}
+    {{-- Row 1: Description + Invite Student button --}}
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <p class="text-sm text-gray-500">Review and manage student appointment requests.</p>
+
+        <a href="{{ route('counselor.appointments.create') }}"
+           class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-blue-600 text-white
+                  hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-sm shrink-0 self-start sm:self-auto">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+            Invite Student
+        </a>
+    </div>
+
+    {{-- Row 2: Status Filters --}}
     <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 flex-nowrap sm:flex-wrap">
         <span class="text-xs text-gray-400 font-medium uppercase tracking-wide mr-1 shrink-0">Filter:</span>
         @foreach(['', 'pending', 'approved', 'completed', 'rejected', 'cancelled'] as $s)
@@ -31,6 +44,7 @@
             </a>
         @endforeach
     </div>
+
 </div>
 
 {{-- ── Flash Message ── --}}
@@ -57,17 +71,22 @@
             <p class="text-sm text-gray-400 mt-1">
                 {{ request('status') ? 'No ' . request('status') . ' appointments at this time.' : 'You have no appointments yet.' }}
             </p>
+            <a href="{{ route('counselor.appointments.create') }}"
+               class="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+                Invite a Student
+            </a>
         </div>
     @else
 
         {{-- ── Desktop Table (md and up) ── --}}
         <div class="hidden md:block overflow-x-auto">
-            <table class="w-full min-w-[640px]">
+            <table class="w-full min-w-[700px]">
                 <thead>
                     <tr class="bg-gray-50 border-b border-gray-100">
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Student</th>
                         <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Concern</th>
                         <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Preferred Date & Time</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Source</th>
                         <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                         <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
                     </tr>
@@ -126,6 +145,29 @@
                                 </p>
                             </td>
 
+                            {{-- Source: who initiated --}}
+                            <td class="px-4 py-4">
+                                @if($appointment->initiated_by === 'counselor')
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 whitespace-nowrap">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                        </svg>
+                                        Invite Sent
+                                    </span>
+                                    @if($appointment->invite_status === 'pending' && $appointment->status === 'pending')
+                                        <p class="text-xs text-amber-600 mt-1">Awaiting student</p>
+                                    @elseif($appointment->invite_status === 'accepted')
+                                        <p class="text-xs text-green-600 mt-1">Student accepted</p>
+                                    @elseif($appointment->invite_status === 'declined')
+                                        <p class="text-xs text-red-500 mt-1">Student declined</p>
+                                    @endif
+                                @else
+                                    <span class="inline-block px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 whitespace-nowrap">
+                                        Student Request
+                                    </span>
+                                @endif
+                            </td>
+
                             {{-- Status --}}
                             <td class="px-4 py-4">
                                 <span class="inline-block px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap
@@ -161,8 +203,6 @@
                     ];
                 @endphp
                 <div class="px-4 py-4">
-
-                    {{-- Top row: avatar + name + status --}}
                     <div class="flex items-start justify-between gap-3 mb-3">
                         <div class="flex items-center gap-3 min-w-0">
                             <div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold shrink-0 overflow-hidden">
@@ -190,11 +230,15 @@
                         </span>
                     </div>
 
-                    {{-- Meta row: concern + date --}}
-                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-3">
+                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-3">
                         <span class="inline-block px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
                             {{ ucfirst(str_replace('_', ' ', $appointment->concern_type)) }}
                         </span>
+                        @if($appointment->initiated_by === 'counselor')
+                            <span class="inline-block px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700">
+                                Invite Sent
+                            </span>
+                        @endif
                         <div class="flex items-center gap-1.5 text-xs text-gray-500">
                             <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -205,12 +249,10 @@
                         </div>
                     </div>
 
-                    {{-- Action --}}
                     <a href="{{ route('counselor.appointments.show', $appointment) }}"
                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors">
                         View Details →
                     </a>
-
                 </div>
             @endforeach
         </div>

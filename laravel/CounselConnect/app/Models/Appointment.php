@@ -22,6 +22,9 @@ class Appointment extends Model
         'preferred_time',
         'scheduled_at',
         'rejection_reason',
+        // ── Counselor-invite feature ──
+        'initiated_by',
+        'invite_status',
     ];
 
     protected function casts(): array
@@ -103,5 +106,26 @@ class Appointment extends Model
     public function isRejected(): bool
     {
         return $this->status === 'rejected';
+    }
+
+    // ─── Invite Helpers ──────────────────────────────────────────
+    public function isCounselorInitiated(): bool
+    {
+        return $this->initiated_by === 'counselor';
+    }
+
+    public function isStudentInitiated(): bool
+    {
+        return $this->initiated_by === 'student';
+    }
+
+    /**
+     * True when a counselor sent the invite and the student hasn't responded yet.
+     */
+    public function isAwaitingStudentResponse(): bool
+    {
+        return $this->isCounselorInitiated()
+            && $this->status === 'pending'
+            && $this->invite_status === 'pending';
     }
 }

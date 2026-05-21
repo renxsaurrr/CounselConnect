@@ -5,6 +5,62 @@
 
 @section('content')
 
+{{-- ── Counselor Invite Response Panel ── --}}
+{{-- Only shown when this appointment was created by the counselor AND student hasn't responded yet --}}
+@if($appointment->isAwaitingStudentResponse())
+    <div class="mb-6 bg-white border-2 border-purple-200 rounded-2xl shadow-sm overflow-hidden">
+        <div class="px-5 py-4 bg-purple-50 border-b border-purple-200 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
+                <svg class="w-4 h-4 text-purple-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-purple-900">Your counselor has invited you to an appointment</p>
+                <p class="text-xs text-purple-600 mt-0.5">Please accept or decline this invitation.</p>
+            </div>
+        </div>
+        <div class="px-5 py-4 flex items-center gap-3">
+            <form action="{{ route('student.appointments.accept-invite', $appointment) }}" method="POST">
+                @csrf
+                @method('PATCH')
+                <button type="submit"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium
+                               bg-green-600 text-white hover:bg-green-700 active:bg-green-800 transition-colors shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Accept Invitation
+                </button>
+            </form>
+
+            <form action="{{ route('student.appointments.decline-invite', $appointment) }}" method="POST">
+                @csrf
+                @method('PATCH')
+                <button type="submit"
+                        onclick="return confirm('Are you sure you want to decline this invitation?')"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium
+                               border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Decline
+                </button>
+            </form>
+        </div>
+    </div>
+@endif
+
+{{-- ── Accepted Invite Notice ── --}}
+@if($appointment->isCounselorInitiated() && $appointment->invite_status === 'accepted' && $appointment->isPending())
+    <div class="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-green-50 border border-green-100 text-green-700 text-sm">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        You've accepted this invitation. Your counselor will confirm the final schedule shortly.
+    </div>
+@endif
+
     {{-- ── Back link ── --}}
     <div class="mb-5">
         <a href="{{ route('student.appointments.index') }}"
