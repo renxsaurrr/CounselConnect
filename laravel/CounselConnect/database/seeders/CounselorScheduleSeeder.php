@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\User;
-use App\Models\CounselorSchedule;
+use App\Models\Counselorschedule;
 
 class CounselorScheduleSeeder extends Seeder
 {
@@ -91,7 +91,7 @@ class CounselorScheduleSeeder extends Seeder
         foreach ($schedules as $schedule) {
             $counselor = User::where('email', $schedule['email'])->first();
 
-            CounselorSchedule::create([
+            Counselorschedule::create([
                 'counselor_id'       => $counselor->id,
                 'day_of_week'        => $schedule['day_of_week'],
                 'start_time'         => $schedule['start_time'],
