@@ -10,42 +10,39 @@ class ReferralSeeder extends Seeder
 {
     public function run(): void
     {
-        $meredith = User::where('email', 'meredith.gray@counselconnect.com')->first();
-        $james    = User::where('email', 'james.reyes@counselconnect.com')->first();
-        $sofia    = User::where('email', 'sofia.navarro@counselconnect.com')->first();
-
-        $carlos  = User::where('email', 'carlos.mendoza@student.com')->first();
-        $paolo   = User::where('email', 'paolo.bautista@student.com')->first();
-        $maria   = User::where('email', 'maria.santos@student.com')->first();
+        $counselor = User::where('email', 'meredith.gray@counselconnect.com')->first();
+        $student   = User::where('email', 'rendellalfanta@gmail.com')->first();
+        $admin     = User::where('email', 'gray@gmail.com')->first();
 
         $referrals = [
-            // Internal referral: Meredith refers Carlos to James (mental health concern)
+
+            // Internal referral: counselor refers student to admin (acting as another officer)
             [
-                'referred_by' => $meredith->id,
-                'referred_to' => $james->id,
-                'student_id'  => $carlos->id,
-                'reason'      => 'Student shows signs of persistent anxiety and low self-esteem beyond academic concerns. Referring to mental health counselor for further assessment.',
+                'referred_by' => $counselor->id,
+                'referred_to' => $admin->id,
+                'student_id'  => $student->id,
+                'reason'      => 'Student shows signs of persistent anxiety and low self-esteem beyond the scope of career counseling. Referring for further assessment and support.',
                 'type'        => 'internal',
                 'status'      => 'acknowledged',
             ],
 
-            // Internal referral: James refers Paolo to Sofia (academic planning)
+            // External referral: counselor refers student to an outside professional
             [
-                'referred_by' => $james->id,
-                'referred_to' => $sofia->id,
-                'student_id'  => $paolo->id,
-                'reason'      => 'Student\'s personal difficulties are impacting academic performance. Recommending academic counseling to create a recovery plan for the current semester.',
-                'type'        => 'internal',
+                'referred_by' => $counselor->id,
+                'referred_to' => $counselor->id, // self-logged external referral
+                'student_id'  => $student->id,
+                'reason'      => 'Student\'s reported mental health symptoms exceed what can be addressed within the school guidance scope. Referring to a licensed clinical psychologist for professional evaluation.',
+                'type'        => 'external',
                 'status'      => 'pending',
             ],
 
-            // External referral: Sofia refers Maria to an outside professional
+            // Internal referral: admin refers student back to counselor for follow-up
             [
-                'referred_by' => $sofia->id,
-                'referred_to' => $james->id,   // James logs the external referral internally
-                'student_id'  => $maria->id,
-                'reason'      => 'Student\'s reported symptoms exceed what can be addressed within the school guidance scope. Referring to a licensed clinical psychologist for professional evaluation.',
-                'type'        => 'external',
+                'referred_by' => $admin->id,
+                'referred_to' => $counselor->id,
+                'student_id'  => $student->id,
+                'reason'      => 'Student submitted a concern via the portal regarding difficulty adjusting to college life. Recommending a follow-up counseling session.',
+                'type'        => 'internal',
                 'status'      => 'pending',
             ],
         ];

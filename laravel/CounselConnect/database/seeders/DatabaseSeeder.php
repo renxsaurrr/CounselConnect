@@ -10,9 +10,9 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             UserSeeder::class,
-            StudentProfileSeeder::class,
-            CounselorProfileSeeder::class,
             AdminProfileSeeder::class,
+            CounselorProfileSeeder::class,
+            StudentProfileSeeder::class,
             CounselorScheduleSeeder::class,
             AppointmentSeeder::class,
             SessionRecordSeeder::class,
