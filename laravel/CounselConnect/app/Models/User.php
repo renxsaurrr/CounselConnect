@@ -82,7 +82,7 @@ class User extends Authenticatable
     // ─── Counselor Schedules ─────────────────────────────────────
     public function schedules()
     {
-        return $this->hasMany(CounselorSchedule::class, 'counselor_id');
+        return $this->hasMany(Counselorschedule::class, 'counselor_id');
     }
 
     // ─── Session Records ─────────────────────────────────────────
