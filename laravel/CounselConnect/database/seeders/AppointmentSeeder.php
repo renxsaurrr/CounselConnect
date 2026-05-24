@@ -14,8 +14,6 @@ class AppointmentSeeder extends Seeder
         $student   = User::where('email', 'rendellalfanta@gmail.com')->first();
 
         $appointments = [
-
-            // ── Approved (student-initiated) ───────────────────────────────
             [
                 'student_id'     => $student->id,
                 'counselor_id'   => $counselor->id,
@@ -28,8 +26,6 @@ class AppointmentSeeder extends Seeder
                 'initiated_by'   => 'student',
                 'invite_status'  => null,
             ],
-
-            // ── Pending (student-initiated) ────────────────────────────────
             [
                 'student_id'     => $student->id,
                 'counselor_id'   => $counselor->id,
@@ -42,8 +38,6 @@ class AppointmentSeeder extends Seeder
                 'initiated_by'   => 'student',
                 'invite_status'  => null,
             ],
-
-            // ── Pending invite (counselor-initiated, student hasn't responded) ──
             [
                 'student_id'     => $student->id,
                 'counselor_id'   => $counselor->id,
@@ -56,8 +50,6 @@ class AppointmentSeeder extends Seeder
                 'initiated_by'   => 'counselor',
                 'invite_status'  => 'pending',
             ],
-
-            // ── Completed ──────────────────────────────────────────────────
             [
                 'student_id'     => $student->id,
                 'counselor_id'   => $counselor->id,
@@ -70,8 +62,6 @@ class AppointmentSeeder extends Seeder
                 'initiated_by'   => 'student',
                 'invite_status'  => null,
             ],
-
-            // ── Completed (counselor-initiated, student accepted) ──────────
             [
                 'student_id'     => $student->id,
                 'counselor_id'   => $counselor->id,
@@ -84,8 +74,6 @@ class AppointmentSeeder extends Seeder
                 'initiated_by'   => 'counselor',
                 'invite_status'  => 'accepted',
             ],
-
-            // ── Rejected ───────────────────────────────────────────────────
             [
                 'student_id'       => $student->id,
                 'counselor_id'     => $counselor->id,
@@ -99,8 +87,6 @@ class AppointmentSeeder extends Seeder
                 'initiated_by'     => 'student',
                 'invite_status'    => null,
             ],
-
-            // ── Cancelled ──────────────────────────────────────────────────
             [
                 'student_id'     => $student->id,
                 'counselor_id'   => $counselor->id,
@@ -113,8 +99,6 @@ class AppointmentSeeder extends Seeder
                 'initiated_by'   => 'student',
                 'invite_status'  => null,
             ],
-
-            // ── Declined invite (counselor-initiated, student declined) ────
             [
                 'student_id'     => $student->id,
                 'counselor_id'   => $counselor->id,

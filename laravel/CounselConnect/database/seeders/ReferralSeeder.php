@@ -15,8 +15,6 @@ class ReferralSeeder extends Seeder
         $admin     = User::where('email', 'gray@gmail.com')->first();
 
         $referrals = [
-
-            // Internal referral: counselor refers student to admin (acting as another officer)
             [
                 'referred_by' => $counselor->id,
                 'referred_to' => $admin->id,
@@ -25,18 +23,14 @@ class ReferralSeeder extends Seeder
                 'type'        => 'internal',
                 'status'      => 'acknowledged',
             ],
-
-            // External referral: counselor refers student to an outside professional
             [
                 'referred_by' => $counselor->id,
-                'referred_to' => $counselor->id, // self-logged external referral
+                'referred_to' => $counselor->id,
                 'student_id'  => $student->id,
                 'reason'      => 'Student\'s reported mental health symptoms exceed what can be addressed within the school guidance scope. Referring to a licensed clinical psychologist for professional evaluation.',
                 'type'        => 'external',
                 'status'      => 'pending',
             ],
-
-            // Internal referral: admin refers student back to counselor for follow-up
             [
                 'referred_by' => $admin->id,
                 'referred_to' => $counselor->id,

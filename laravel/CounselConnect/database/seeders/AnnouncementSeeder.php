@@ -14,8 +14,6 @@ class AnnouncementSeeder extends Seeder
         $counselor = User::where('email', 'meredith.gray@counselconnect.com')->first();
 
         $announcements = [
-
-            // Published — all
             [
                 'posted_by'    => $admin->id,
                 'title'        => 'Welcome to CounselConnect!',
@@ -23,8 +21,6 @@ class AnnouncementSeeder extends Seeder
                 'audience'     => 'all',
                 'is_published' => true,
             ],
-
-            // Published — students only
             [
                 'posted_by'    => $counselor->id,
                 'title'        => 'Career Planning Workshop — June 10, 2026',
@@ -32,8 +28,6 @@ class AnnouncementSeeder extends Seeder
                 'audience'     => 'students',
                 'is_published' => true,
             ],
-
-            // Published — counselors only
             [
                 'posted_by'    => $admin->id,
                 'title'        => 'Counselor Case Conference — June 3, 2026',
@@ -41,8 +35,6 @@ class AnnouncementSeeder extends Seeder
                 'audience'     => 'counselors',
                 'is_published' => true,
             ],
-
-            // Published — all
             [
                 'posted_by'    => $counselor->id,
                 'title'        => 'Reminder: Keep Your Profile Updated',
@@ -50,8 +42,6 @@ class AnnouncementSeeder extends Seeder
                 'audience'     => 'students',
                 'is_published' => true,
             ],
-
-            // Draft — not yet published
             [
                 'posted_by'    => $admin->id,
                 'title'        => 'Mental Health Awareness Month — June 2026',

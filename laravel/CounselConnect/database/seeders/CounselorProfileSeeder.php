@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\User;
-use App\Models\CounselorProfile;
+use App\Models\Counselorprofile;
 
 class CounselorProfileSeeder extends Seeder
 {
@@ -12,7 +12,7 @@ class CounselorProfileSeeder extends Seeder
     {
         $user = User::where('email', 'meredith.gray@counselconnect.com')->first();
 
-        CounselorProfile::firstOrCreate(
+        Counselorprofile::firstOrCreate(
             ['user_id' => $user->id],
             [
                 'specialization'  => 'Career Counseling',

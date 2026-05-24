@@ -10,7 +10,6 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // ── Admin ──────────────────────────────────────────────
         User::firstOrCreate(
             ['email' => 'gray@gmail.com'],
             [
@@ -22,7 +21,6 @@ class UserSeeder extends Seeder
             ]
         );
 
-        // ── Counselor ──────────────────────────────────────────
         User::firstOrCreate(
             ['email' => 'meredith.gray@counselconnect.com'],
             [
@@ -34,7 +32,6 @@ class UserSeeder extends Seeder
             ]
         );
 
-        // ── Student ────────────────────────────────────────────
         User::firstOrCreate(
             ['email' => 'rendellalfanta@gmail.com'],
             [
