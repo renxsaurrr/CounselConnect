@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
-use App\Models\CounselorSchedule;
+use App\Models\Counselorschedule;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -54,7 +54,7 @@ class StudentAppointmentController extends Controller
         $date      = Carbon::parse($request->date);
         $dayOfWeek = $date->format('l');
 
-        $schedule = CounselorSchedule::where('counselor_id', $request->counselor_id)
+        $schedule = Counselorschedule::where('counselor_id', $request->counselor_id)
             ->where('day_of_week', $dayOfWeek)
             ->where('is_active', true)
             ->first();
@@ -134,7 +134,7 @@ class StudentAppointmentController extends Controller
         $date      = Carbon::parse($data['preferred_date']);
         $dayOfWeek = $date->format('l');
 
-        $schedule = CounselorSchedule::where('counselor_id', $data['counselor_id'])
+        $schedule = Counselorschedule::where('counselor_id', $data['counselor_id'])
             ->where('day_of_week', $dayOfWeek)
             ->where('is_active', true)
             ->first();
