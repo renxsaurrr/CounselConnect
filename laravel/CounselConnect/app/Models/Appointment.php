@@ -48,7 +48,7 @@ class Appointment extends Model
 
     public function schedule()
     {
-        return $this->belongsTo(CounselorSchedule::class, 'schedule_id');
+        return $this->belongsTo(Counselorschedule::class, 'schedule_id');
     }
 
     public function sessionRecord()
