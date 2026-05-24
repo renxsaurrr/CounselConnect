@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\User;
-use App\Models\AdminProfile;
+use App\Models\Adminprofile;
 
 class AdminProfileSeeder extends Seeder
 {
@@ -12,7 +12,7 @@ class AdminProfileSeeder extends Seeder
     {
         $user = User::where('email', 'gray@gmail.com')->first();
 
-        AdminProfile::firstOrCreate(
+        Adminprofile::firstOrCreate(
             ['user_id' => $user->id]
         );
     }
