@@ -10,7 +10,7 @@ class CounselorProfileSeeder extends Seeder
 {
     public function run(): void
     {
-        $user = User::where('email', 'meredith.gray@counselconnect.com')->first();
+        $user = User::where('email', 'gray@counselconnect.com')->first();
 
         Counselorprofile::firstOrCreate(
             ['user_id' => $user->id],

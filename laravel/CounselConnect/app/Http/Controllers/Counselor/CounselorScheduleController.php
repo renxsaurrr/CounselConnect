@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Counselor;
 
 use App\Http\Controllers\Controller;
-use App\Models\CounselorSchedule;
+use App\Models\Counselorschedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -12,7 +12,7 @@ class CounselorScheduleController extends Controller
     // ─── List Schedules ──────────────────────────────────────────
     public function index()
     {
-        $schedules = CounselorSchedule::where('counselor_id', Auth::id())
+        $schedules = Counselorschedule::where('counselor_id', Auth::id())
             ->orderByRaw("FIELD(day_of_week, 'Monday','Tuesday','Wednesday','Thursday','Friday')")
             ->get();
 
@@ -46,7 +46,7 @@ class CounselorScheduleController extends Controller
     }
 
     // ─── Show Single Schedule ─────────────────────────────────────
-    public function show(CounselorSchedule $schedule)
+    public function show(Counselorschedule $schedule)
     {
         $this->authorizeSchedule($schedule);
 
@@ -56,7 +56,7 @@ class CounselorScheduleController extends Controller
     }
 
     // ─── Show Edit Form ──────────────────────────────────────────
-    public function edit(CounselorSchedule $schedule)
+    public function edit(Counselorschedule $schedule)
     {
         $this->authorizeSchedule($schedule);
 
@@ -64,7 +64,7 @@ class CounselorScheduleController extends Controller
     }
 
     // ─── Update Schedule ─────────────────────────────────────────
-    public function update(Request $request, CounselorSchedule $schedule)
+    public function update(Request $request, Counselorschedule $schedule)
     {
         $this->authorizeSchedule($schedule);
 
@@ -83,7 +83,7 @@ class CounselorScheduleController extends Controller
     }
 
     // ─── Delete Schedule ─────────────────────────────────────────
-    public function destroy(CounselorSchedule $schedule)
+    public function destroy(Counselorschedule $schedule)
     {
         $this->authorizeSchedule($schedule);
 
@@ -94,7 +94,7 @@ class CounselorScheduleController extends Controller
     }
 
     // ─── Guard: Only Own Schedules ───────────────────────────────
-    private function authorizeSchedule(CounselorSchedule $schedule): void
+    private function authorizeSchedule(Counselorschedule $schedule): void
     {
         abort_if($schedule->counselor_id !== Auth::id(), 403);
     }

@@ -10,7 +10,7 @@ class AdminProfileSeeder extends Seeder
 {
     public function run(): void
     {
-        $user = User::where('email', 'gray@gmail.com')->first();
+        $user = User::where('email', 'admin@gmail.com')->first();
 
         Adminprofile::firstOrCreate(
             ['user_id' => $user->id]

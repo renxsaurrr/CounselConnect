@@ -10,7 +10,7 @@ class AppointmentSeeder extends Seeder
 {
     public function run(): void
     {
-        $counselor = User::where('email', 'meredith.gray@counselconnect.com')->first();
+        $counselor = User::where('email', 'gray@counselconnect.com')->first();
         $student   = User::where('email', 'rendellalfanta@gmail.com')->first();
 
         $appointments = [

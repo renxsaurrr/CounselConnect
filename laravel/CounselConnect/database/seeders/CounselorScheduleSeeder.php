@@ -10,7 +10,7 @@ class CounselorScheduleSeeder extends Seeder
 {
     public function run(): void
     {
-        $counselor = User::where('email', 'meredith.gray@counselconnect.com')->first();
+        $counselor = User::where('email', 'gray@counselconnect.com')->first();
 
         $schedules = [
             ['day_of_week' => 'Monday',    'start_time' => '08:00:00', 'end_time' => '17:00:00', 'slot_duration_mins' => 60],
